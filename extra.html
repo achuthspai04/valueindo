@@ -1,0 +1,82 @@
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600&family=Space+Grotesk:wght@600;700&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0}
+.page{background:#fff;font-family:'Inter',sans-serif;max-width:680px;min-height:520px;display:flex;flex-direction:column}
+.progress-wrap{height:3px;background:#f3f4f6}
+.progress-fill{height:3px;background:#E8380D;width:100%}
+.nav{display:flex;align-items:center;justify-content:space-between;padding:18px 32px;border-bottom:1px solid #f3f4f6}
+.nav-logo{font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:700;color:#0f0f0f}
+.nav-logo span{color:#E8380D}
+.nav-back{font-size:12px;color:#9ca3af;cursor:pointer;display:flex;align-items:center;gap:4px;background:none;border:none;font-family:'Inter',sans-serif}
+.form-body{flex:1;padding:36px 64px 40px;display:flex;flex-direction:column;justify-content:space-between}
+.page-label{font-size:11px;font-weight:600;color:#E8380D;letter-spacing:.1em;text-transform:uppercase;margin-bottom:10px}
+.page-title{font-family:'Instrument Serif',serif;font-size:24px;color:#0f0f0f;line-height:1.3;margin-bottom:4px}
+.page-sub{font-size:13px;color:#9ca3af;margin-bottom:32px}
+.q-block{margin-bottom:24px}
+.q-text{font-size:13px;font-weight:600;color:#0f0f0f;margin-bottom:10px}
+.options{display:flex;flex-direction:column;gap:7px}
+.option{display:flex;align-items:center;gap:12px;padding:11px 16px;border:1.5px solid #e5e7eb;border-radius:10px;cursor:pointer;transition:border-color .15s,background .15s}
+.option:hover{border-color:#0f0f0f;background:#fafafa}
+.option.selected{border-color:#0f0f0f;background:#0f0f0f}
+.option.selected .opt-text{color:#fff}
+.opt-text{font-size:13px;color:#374151;font-weight:500}
+.separator{height:1px;background:#f3f4f6;margin:20px 0}
+.submit-row{display:flex;align-items:center;justify-content:space-between;padding-top:8px}
+.pill-btn{display:inline-flex;align-items:center;gap:7px;background:#E8380D;color:#fff;font-size:13px;font-weight:500;padding:10px 22px;border-radius:999px;border:none;cursor:pointer;font-family:'Inter',sans-serif}
+.skip-btn{font-size:12px;color:#9ca3af;background:none;border:none;cursor:pointer;font-family:'Inter',sans-serif;text-decoration:underline;text-underline-offset:3px}
+.skip-btn:hover{color:#6b7280}
+</style>
+
+<h2 class="sr-only">Valueindo — optional questions final</h2>
+
+<div class="page">
+  <div class="progress-wrap"><div class="progress-fill"></div></div>
+
+  <nav class="nav">
+    <div class="nav-logo">value<span>indo</span>?</div>
+    <button class="nav-back"><i class="ti ti-arrow-left" aria-hidden="true"></i> back</button>
+  </nav>
+
+  <div class="form-body">
+    <div>
+      <div class="page-label">Almost there</div>
+      <div class="page-title">Two quick ones.</div>
+      <div class="page-sub">Helps sharpen your result. Answer what you can.</div>
+
+      <div class="q-block">
+        <div class="q-text">Did they mention getting your contact from your college?</div>
+        <div class="options">
+          <div class="option" onclick="toggle(this)"><span class="opt-text">Yes</span></div>
+          <div class="option" onclick="toggle(this)"><span class="opt-text">No</span></div>
+          <div class="option" onclick="toggle(this)"><span class="opt-text">They implied it but didn't say directly</span></div>
+        </div>
+      </div>
+
+      <div class="separator"></div>
+
+      <div class="q-block">
+        <div class="q-text">Did they provide a formal offer letter or written agreement?</div>
+        <div class="options">
+          <div class="option" onclick="toggle(this)"><span class="opt-text">Yes</span></div>
+          <div class="option" onclick="toggle(this)"><span class="opt-text">No</span></div>
+          <div class="option" onclick="toggle(this)"><span class="opt-text">They said it would come later</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="submit-row">
+      <button class="skip-btn">skip — analyse anyway</button>
+      <button class="pill-btn"><i class="ti ti-sparkles" aria-hidden="true"></i> Analyse my offer</button>
+    </div>
+  </div>
+</div>
+
+<script>
+function toggle(el){
+  const siblings=el.parentElement.querySelectorAll('.option');
+  siblings.forEach(o=>o.classList.remove('selected'));
+  el.classList.add('selected');
+}
+</script>

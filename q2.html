@@ -1,0 +1,73 @@
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600&family=Space+Grotesk:wght@600;700&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0}
+.page{background:#fff;font-family:'Inter',sans-serif;max-width:680px;min-height:520px;display:flex;flex-direction:column}
+.progress-wrap{height:3px;background:#f3f4f6}
+.progress-fill{height:3px;background:#E8380D;width:33.2%}
+.nav{display:flex;align-items:center;justify-content:space-between;padding:18px 32px;border-bottom:1px solid #f3f4f6}
+.nav-logo{font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:700;color:#0f0f0f;letter-spacing:-0.3px}
+.nav-logo span{color:#E8380D}
+.nav-right{display:flex;align-items:center;gap:16px}
+.nav-step{font-size:12px;color:#9ca3af}
+.nav-back{font-size:12px;color:#9ca3af;cursor:pointer;display:flex;align-items:center;gap:4px;background:none;border:none;font-family:'Inter',sans-serif}
+.nav-back:hover{color:#0f0f0f}
+.form-body{flex:1;padding:40px 64px}
+.q-label{font-size:11px;font-weight:600;color:#E8380D;letter-spacing:.1em;text-transform:uppercase;margin-bottom:14px}
+.q-text{font-family:'Instrument Serif',serif;font-size:26px;color:#0f0f0f;line-height:1.3;margin-bottom:28px}
+.options{display:flex;flex-direction:column;gap:10px}
+.option{display:flex;align-items:center;gap:14px;padding:14px 18px;border:1.5px solid #e5e7eb;border-radius:10px;cursor:pointer;transition:border-color .15s,background .15s;user-select:none}
+.option:hover{border-color:#0f0f0f;background:#fafafa}
+.option.selected{border-color:#0f0f0f;background:#0f0f0f}
+.option.selected .opt-text{color:#fff}
+.option.selected .opt-icon{color:#E8380D}
+.opt-icon{font-size:18px;color:#9ca3af;flex-shrink:0}
+.opt-text{font-size:14px;color:#374151;font-weight:500;line-height:1.4}
+.option.selected .opt-icon{color:#E8380D}
+</style>
+
+<h2 class="sr-only">Valueindo form — question 2 of 6</h2>
+
+<div class="page">
+  <div class="progress-wrap"><div class="progress-fill"></div></div>
+
+  <nav class="nav">
+    <div class="nav-logo">value<span>indo</span>?</div>
+    <div class="nav-right">
+      <button class="nav-back"><i class="ti ti-arrow-left" aria-hidden="true"></i> back</button>
+      <div class="nav-step">2 of 6</div>
+    </div>
+  </nav>
+
+  <div class="form-body">
+    <div class="q-label">The offer</div>
+    <div class="q-text">How did this opportunity come to you?</div>
+    <div class="options">
+      <div class="option" onclick="select(this)">
+        <i class="ti ti-message-circle opt-icon" aria-hidden="true"></i>
+        <span class="opt-text">They messaged me first — WhatsApp, LinkedIn, or email</span>
+      </div>
+      <div class="option" onclick="select(this)">
+        <i class="ti ti-school opt-icon" aria-hidden="true"></i>
+        <span class="opt-text">My college gave them my contact</span>
+      </div>
+      <div class="option" onclick="select(this)">
+        <i class="ti ti-search opt-icon" aria-hidden="true"></i>
+        <span class="opt-text">I applied through a job platform</span>
+      </div>
+      <div class="option" onclick="select(this)">
+        <i class="ti ti-user opt-icon" aria-hidden="true"></i>
+        <span class="opt-text">Someone I know referred me</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function select(el) {
+  document.querySelectorAll('.option').forEach(o => o.classList.remove('selected'));
+  el.classList.add('selected');
+  setTimeout(() => {}, 320);
+}
+</script>
