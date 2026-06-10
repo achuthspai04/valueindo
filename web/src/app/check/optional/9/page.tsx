@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, User, Users, BookOpen, HelpCircle } from "lucide-react";
@@ -19,6 +19,10 @@ function saveAnswer(key: string, value: string) {
   sessionStorage.setItem(STORAGE_KEY, JSON.stringify({ ...current, [key]: value }));
 }
 
+function subscribe() {
+  return () => {};
+}
+
 const options: { code: string; text: string; icon: LucideIcon }[] = [
   { code: "one_on_one", text: "One-on-one with a company or team", icon: User },
   { code: "cohort", text: "Part of a group or cohort of students", icon: Users },
@@ -29,11 +33,11 @@ const options: { code: string; text: string; icon: LucideIcon }[] = [
 export default function OptionalQ9Page() {
   const router = useRouter();
   const [selected, setSelected] = useState<string | null>(null);
-  const [savedValue, setSavedValue] = useState<string>("");
-
-  useEffect(() => {
-    setSavedValue(loadAnswers().q9_structure ?? "");
-  }, []);
+  const savedValue = useSyncExternalStore(
+    subscribe,
+    () => loadAnswers().q9_structure ?? "",
+    () => ""
+  );
 
   function handleSelect(code: string) {
     setSelected(code);

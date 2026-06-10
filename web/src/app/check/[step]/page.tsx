@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, KeyboardEvent } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore, KeyboardEvent } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -14,10 +14,11 @@ import {
 import type { LucideIcon } from "lucide-react";
 
 const TOTAL = 6;
-const STORAGE_KEY = "valueindo-answers";
+const STORAGE_KEY = "valueindo_answers";
+const SESSION_KEY = "valueindo_session_id";
 type AnswerMap = Record<string, string>;
 
-type Option = { text: string; icon: LucideIcon };
+type Option = { text: string; code: string; icon: LucideIcon };
 
 type Question =
   | {
@@ -35,7 +36,7 @@ const questions: Question[] = [
     label: "Let's start",
     text: "What is the name of the company or organisation?",
     type: "text",
-    key: "company",
+    key: "q1_company",
     placeholder: "e.g. Acme Technologies Pvt. Ltd.",
     hint: "Type exactly as it appeared in the offer or message.",
   },
@@ -44,12 +45,12 @@ const questions: Question[] = [
     label: "The offer",
     text: "How did this opportunity come to you?",
     type: "radio",
-    key: "source",
+    key: "q2_source",
     options: [
-      { text: "They messaged me first — WhatsApp, LinkedIn, or email", icon: MessageCircle },
-      { text: "My college gave them my contact", icon: School },
-      { text: "I applied through a job platform", icon: Search },
-      { text: "Someone I know referred me", icon: User },
+      { text: "They messaged me first — WhatsApp, LinkedIn, or email", code: "messaged_first", icon: MessageCircle },
+      { text: "My college gave them my contact", code: "college_contact", icon: School },
+      { text: "I applied through a job platform", code: "applied", icon: Search },
+      { text: "Someone I know referred me", code: "referred", icon: User },
     ],
   },
   {
@@ -57,13 +58,13 @@ const questions: Question[] = [
     label: "Money",
     text: "Did they ask you to pay anything at any point?",
     type: "radio",
-    key: "payment",
+    key: "q3_payment",
     options: [
-      { text: "No — they never asked me to pay", icon: CheckCircle2 },
-      { text: "Yes — to register or apply", icon: AlertCircle },
-      { text: "Yes — to confirm the offer", icon: AlertCircle },
-      { text: "Yes — for training material or a kit", icon: AlertCircle },
-      { text: "Yes — something else", icon: MoreHorizontal },
+      { text: "No — they never asked me to pay", code: "no", icon: CheckCircle2 },
+      { text: "Yes — to register or apply", code: "yes_register", icon: AlertCircle },
+      { text: "Yes — to confirm the offer", code: "yes_confirm", icon: AlertCircle },
+      { text: "Yes — for training material or a kit", code: "yes_training", icon: AlertCircle },
+      { text: "Yes — something else", code: "yes_other", icon: MoreHorizontal },
     ],
   },
   {
@@ -71,14 +72,14 @@ const questions: Question[] = [
     label: "Compensation",
     text: "What is the compensation offered?",
     type: "radio",
-    key: "compensation",
+    key: "q4_compensation",
     options: [
-      { text: "Fixed monthly stipend", icon: Banknote },
-      { text: "Performance or commission based", icon: BarChart2 },
-      { text: "Unpaid", icon: Ban },
-      { text: "Academic credits only", icon: School },
-      { text: "Certificate only", icon: Award },
-      { text: "Not mentioned at all", icon: HelpCircle },
+      { text: "Fixed monthly stipend", code: "fixed_stipend", icon: Banknote },
+      { text: "Performance or commission based", code: "commission", icon: BarChart2 },
+      { text: "Unpaid", code: "unpaid", icon: Ban },
+      { text: "Academic credits only", code: "credits_only", icon: School },
+      { text: "Certificate only", code: "certificate_only", icon: Award },
+      { text: "Not mentioned at all", code: "not_mentioned", icon: HelpCircle },
     ],
   },
   {
@@ -86,11 +87,11 @@ const questions: Question[] = [
     label: "Pressure",
     text: "Were you pressured to confirm or respond quickly?",
     type: "radio",
-    key: "pressure",
+    key: "q5_pressure",
     options: [
-      { text: "Yes — they gave me only a few hours", icon: Zap },
-      { text: "Yes — within a day", icon: Clock },
-      { text: "No deadline was given", icon: CheckCircle },
+      { text: "Yes — they gave me only a few hours", code: "hours", icon: Zap },
+      { text: "Yes — within a day", code: "day", icon: Clock },
+      { text: "No deadline was given", code: "no_deadline", icon: CheckCircle },
     ],
   },
   {
@@ -98,25 +99,29 @@ const questions: Question[] = [
     label: "Selection",
     text: "Was there any actual interview or selection process?",
     type: "radio",
-    key: "interview",
+    key: "q6_interview",
     options: [
-      { text: "Yes — a proper interview", icon: Users },
-      { text: "Just a quick form or quiz", icon: FileText },
-      { text: "No — the offer came instantly", icon: Zap },
-      { text: "Not yet — still in process", icon: Loader2 },
+      { text: "Yes — a proper interview", code: "proper", icon: Users },
+      { text: "Just a quick form or quiz", code: "form_quiz", icon: FileText },
+      { text: "No — the offer came instantly", code: "instant", icon: Zap },
+      { text: "Not yet — still in process", code: "not_yet", icon: Loader2 },
     ],
   },
 ];
 
 function loadAnswers(): AnswerMap {
   if (typeof window === "undefined") return {};
-  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}"); }
+  try { return JSON.parse(sessionStorage.getItem(STORAGE_KEY) || "{}"); }
   catch { return {}; }
 }
 
 function saveAnswer(key: string, value: string) {
   const current = loadAnswers();
-  localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...current, [key]: value }));
+  sessionStorage.setItem(STORAGE_KEY, JSON.stringify({ ...current, [key]: value }));
+}
+
+function subscribe() {
+  return () => {};
 }
 
 export default function CheckStepPage() {
@@ -124,30 +129,23 @@ export default function CheckStepPage() {
   const router = useRouter();
   const stepNum = parseInt(params.step as string, 10);
 
-  const [answers, setAnswers] = useState<AnswerMap>({});
-  const [textValue, setTextValue] = useState("");
-  const [validationMsg, setValidationMsg] = useState("");
-  const [selectedOption, setSelectedOption] = useState<string | null>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
-
   useEffect(() => {
     if (isNaN(stepNum) || stepNum < 1 || stepNum > TOTAL) {
       router.replace("/check/1");
     }
   }, [stepNum, router]);
 
+  // Create (or reuse) the session as soon as the user lands on the first step
   useEffect(() => {
-    const saved = loadAnswers();
-    setAnswers(saved);
-    setSelectedOption(null);
-    setValidationMsg("");
-    if (!isNaN(stepNum) && stepNum >= 1 && stepNum <= TOTAL) {
-      const q = questions[stepNum - 1];
-      if (q.type === "text") {
-        setTextValue(saved[q.key] ?? "");
-        setTimeout(() => inputRef.current?.focus(), 50);
-      }
-    }
+    if (stepNum !== 1) return;
+    if (sessionStorage.getItem(SESSION_KEY)) return;
+
+    fetch(`${process.env.NEXT_PUBLIC_WORKER_URL}/session/create`, { method: "POST" })
+      .then((res) => res.json())
+      .then((data: { id?: string }) => {
+        if (data.id) sessionStorage.setItem(SESSION_KEY, data.id);
+      })
+      .catch((err) => console.error("Failed to create session:", err));
   }, [stepNum]);
 
   if (isNaN(stepNum) || stepNum < 1 || stepNum > TOTAL) return null;
@@ -156,29 +154,6 @@ export default function CheckStepPage() {
   const progress = (stepNum / TOTAL) * 100;
   const isLast = stepNum === TOTAL;
   const nextPath = isLast ? "/check/upload" : `/check/${stepNum + 1}`;
-
-  function advanceText() {
-    const val = textValue.trim();
-    if (!val) {
-      setValidationMsg("Please enter the company name to continue.");
-      inputRef.current?.focus();
-      return;
-    }
-    saveAnswer(q.key, val);
-    router.push(nextPath);
-  }
-
-  function handleKeyDown(e: KeyboardEvent<HTMLInputElement>) {
-    if (e.key === "Enter") advanceText();
-  }
-
-  function handleRadioClick(text: string) {
-    setSelectedOption(text);
-    saveAnswer(q.key, text);
-    setTimeout(() => router.push(nextPath), 280);
-  }
-
-  const savedRadioValue = answers[q.key];
 
   return (
     <div className="min-h-screen bg-white flex flex-col" style={{ fontFamily: "var(--font-inter)" }}>
@@ -233,71 +208,122 @@ export default function CheckStepPage() {
           {q.text}
         </p>
 
-        {/* Text input — Q1 */}
-        {q.type === "text" && (
-          <div>
-            <input
-              ref={inputRef}
-              type="text"
-              value={textValue}
-              onChange={(e) => {
-                setTextValue(e.target.value);
-                if (validationMsg) setValidationMsg("");
-              }}
-              onKeyDown={handleKeyDown}
-              placeholder={q.placeholder}
-              className="w-full px-4 py-[14px] text-[15px] text-[#0f0f0f] border-[1.5px] border-[#e5e7eb] rounded-[8px] outline-none bg-white transition-colors placeholder:text-[#d1d5db] focus:border-[#0f0f0f]"
-            />
-            {q.hint && !validationMsg && (
-              <p className="text-[12px] text-[#9ca3af] mt-2">{q.hint}</p>
-            )}
-            {validationMsg && (
-              <p className="text-[12px] text-[#E8380D] mt-2">{validationMsg}</p>
-            )}
-            <div className="flex justify-end mt-0.5">
-              <button
-                type="button"
-                onClick={advanceText}
-                className="inline-flex items-center gap-2 px-[18px] py-[9px] rounded-full border border-[#e5e7eb] bg-white text-[#0f0f0f] text-[13px] font-medium hover:border-[#0f0f0f] hover:bg-[#fafafa] transition-all duration-150 cursor-pointer"
-              >
-                Continue
-                <ArrowRight size={14} className="text-[#E8380D]" />
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Radio options — icon + text, black selected state */}
-        {q.type === "radio" && (
-          <div className="flex flex-col gap-[10px]">
-            {q.options.map(({ text, icon: Icon }) => {
-              const isSelected = selectedOption === text || (!selectedOption && savedRadioValue === text);
-              return (
-                <button
-                  key={text}
-                  type="button"
-                  onClick={() => handleRadioClick(text)}
-                  className={`flex items-center gap-3.5 w-full text-left px-[18px] py-[14px] rounded-[10px] border-[1.5px] transition-all duration-150 cursor-pointer
-                    ${isSelected
-                      ? "border-[#E8380D] bg-[#fff5f3]"
-                      : "border-[#e5e7eb] bg-white hover:border-[#0f0f0f] hover:bg-[#fafafa]"
-                    }`}
-                >
-                  <Icon
-                    size={18}
-                    strokeWidth={1.8}
-                    aria-hidden="true"
-                    className={`shrink-0 transition-colors ${isSelected ? "text-[#E8380D]" : "text-[#9ca3af]"}`}
-                  />
-                  <span className={`text-[14px] font-medium leading-snug transition-colors ${isSelected ? "text-[#0f0f0f]" : "text-[#374151]"}`}>
-                    {text}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        )}
+        <QuestionField key={stepNum} q={q} nextPath={nextPath} router={router} />
       </div>
+    </div>
+  );
+}
+
+function QuestionField({
+  q,
+  nextPath,
+  router,
+}: {
+  q: Question;
+  nextPath: string;
+  router: ReturnType<typeof useRouter>;
+}) {
+  const [selectedOption, setSelectedOption] = useState<string | null>(null);
+  const [textValue, setTextValue] = useState(() => (q.type === "text" ? loadAnswers()[q.key] ?? "" : ""));
+  const [validationMsg, setValidationMsg] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const savedRadioValue = useSyncExternalStore(
+    subscribe,
+    () => loadAnswers()[q.key],
+    () => undefined
+  );
+
+  useEffect(() => {
+    if (q.type === "text") {
+      const t = setTimeout(() => inputRef.current?.focus(), 50);
+      return () => clearTimeout(t);
+    }
+  }, [q]);
+
+  function advanceText() {
+    const val = textValue.trim();
+    if (!val) {
+      setValidationMsg("Please enter the company name to continue.");
+      inputRef.current?.focus();
+      return;
+    }
+    saveAnswer(q.key, val);
+    router.push(nextPath);
+  }
+
+  function handleKeyDown(e: KeyboardEvent<HTMLInputElement>) {
+    if (e.key === "Enter") advanceText();
+  }
+
+  function handleRadioClick(code: string) {
+    setSelectedOption(code);
+    saveAnswer(q.key, code);
+    setTimeout(() => router.push(nextPath), 280);
+  }
+
+  if (q.type === "text") {
+    return (
+      <div>
+        <input
+          ref={inputRef}
+          type="text"
+          value={textValue}
+          onChange={(e) => {
+            setTextValue(e.target.value);
+            if (validationMsg) setValidationMsg("");
+          }}
+          onKeyDown={handleKeyDown}
+          placeholder={q.placeholder}
+          className="w-full px-4 py-[14px] text-[15px] text-[#0f0f0f] border-[1.5px] border-[#e5e7eb] rounded-[8px] outline-none bg-white transition-colors placeholder:text-[#d1d5db] focus:border-[#0f0f0f]"
+        />
+        {q.hint && !validationMsg && (
+          <p className="text-[12px] text-[#9ca3af] mt-2">{q.hint}</p>
+        )}
+        {validationMsg && (
+          <p className="text-[12px] text-[#E8380D] mt-2">{validationMsg}</p>
+        )}
+        <div className="flex justify-end mt-0.5">
+          <button
+            type="button"
+            onClick={advanceText}
+            className="inline-flex items-center gap-2 px-[18px] py-[9px] rounded-full border border-[#e5e7eb] bg-white text-[#0f0f0f] text-[13px] font-medium hover:border-[#0f0f0f] hover:bg-[#fafafa] transition-all duration-150 cursor-pointer"
+          >
+            Continue
+            <ArrowRight size={14} className="text-[#E8380D]" />
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-[10px]">
+      {q.options.map(({ text, code, icon: Icon }) => {
+        const isSelected = selectedOption === code || (!selectedOption && savedRadioValue === code);
+        return (
+          <button
+            key={code}
+            type="button"
+            onClick={() => handleRadioClick(code)}
+            className={`flex items-center gap-3.5 w-full text-left px-[18px] py-[14px] rounded-[10px] border-[1.5px] transition-all duration-150 cursor-pointer
+              ${isSelected
+                ? "border-[#E8380D] bg-[#fff5f3]"
+                : "border-[#e5e7eb] bg-white hover:border-[#0f0f0f] hover:bg-[#fafafa]"
+              }`}
+          >
+            <Icon
+              size={18}
+              strokeWidth={1.8}
+              aria-hidden="true"
+              className={`shrink-0 transition-colors ${isSelected ? "text-[#E8380D]" : "text-[#9ca3af]"}`}
+            />
+            <span className={`text-[14px] font-medium leading-snug transition-colors ${isSelected ? "text-[#0f0f0f]" : "text-[#374151]"}`}>
+              {text}
+            </span>
+          </button>
+        );
+      })}
     </div>
   );
 }

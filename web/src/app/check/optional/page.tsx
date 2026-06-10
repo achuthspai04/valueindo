@@ -76,7 +76,7 @@ export default function OptionalGatePage() {
 
           <button
             type="button"
-            onClick={() => router.push(`/result/${crypto.randomUUID()}`)}
+            onClick={() => router.push("/check/analysing")}
             className="group flex items-center justify-between w-full text-left px-5 py-[18px] rounded-[12px] border-[1.5px] border-[#e5e7eb] bg-white hover:border-[#0f0f0f] hover:bg-[#fafafa] transition-all duration-150 cursor-pointer"
           >
             <div className="flex flex-col gap-[3px]">

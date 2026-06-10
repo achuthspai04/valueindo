@@ -3,9 +3,12 @@
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, ArrowRight, CloudUpload, Info, X, FileText, Image } from "lucide-react";
+import { ArrowLeft, ArrowRight, CloudUpload, Info, X, FileText, Image, Loader2, CheckCircle2 } from "lucide-react";
 
 const ACCEPTED = ".pdf,.jpg,.jpeg,.png,.webp";
+const EXTRACTED_TEXT_KEY = "valueindo_extracted_text";
+
+type OcrStatus = "idle" | "reading" | "done" | "error";
 
 function fileIcon(file: File) {
   return file.type.startsWith("image/") ? Image : FileText;
@@ -16,6 +19,26 @@ export default function UploadPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [files, setFiles] = useState<File[]>([]);
   const [dragging, setDragging] = useState(false);
+  const [ocrStatus, setOcrStatus] = useState<OcrStatus>("idle");
+
+  async function runOcr(newFiles: File[]) {
+    setOcrStatus("reading");
+    try {
+      const { createWorker } = await import("tesseract.js");
+      const worker = await createWorker("eng");
+      let combined = sessionStorage.getItem(EXTRACTED_TEXT_KEY) || "";
+      for (const file of newFiles) {
+        const { data } = await worker.recognize(file);
+        combined += (combined ? "\n\n" : "") + data.text;
+      }
+      await worker.terminate();
+      sessionStorage.setItem(EXTRACTED_TEXT_KEY, combined.trim());
+      setOcrStatus("done");
+    } catch (err) {
+      console.error("OCR failed:", err);
+      setOcrStatus("error");
+    }
+  }
 
   // Merge new picks with existing — no duplicates by name
   function handleFiles(incoming: FileList | null) {
@@ -23,7 +46,9 @@ export default function UploadPage() {
     const next = Array.from(incoming);
     setFiles((prev) => {
       const existingNames = new Set(prev.map((f) => f.name));
-      return [...prev, ...next.filter((f) => !existingNames.has(f.name))];
+      const added = next.filter((f) => !existingNames.has(f.name));
+      if (added.length) runOcr(added);
+      return [...prev, ...added];
     });
   }
 
@@ -144,6 +169,20 @@ export default function UploadPage() {
               );
             })}
           </ul>
+        )}
+
+        {/* OCR status */}
+        {ocrStatus === "reading" && (
+          <p className="flex items-center gap-2 text-[12px] text-[#9ca3af] mt-3">
+            <Loader2 size={12} className="animate-spin" aria-hidden="true" />
+            Reading document...
+          </p>
+        )}
+        {ocrStatus === "done" && (
+          <p className="flex items-center gap-2 text-[12px] text-[#16a34a] mt-3">
+            <CheckCircle2 size={12} aria-hidden="true" />
+            Document read ✓
+          </p>
         )}
 
         {/* Nudge */}
