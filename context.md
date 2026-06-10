@@ -79,10 +79,19 @@ Steps in order:
 - /check/upload — Upload offer letter / screenshot (optional, nudge not gate)
 - /check/optional/7 — College contact? (radio, optional)
 - /check/optional/8 — Offer letter provided? (radio, optional)
+- /check/optional/9 — How was this internship structured? (radio, optional)
 - /check/analysing — Loading screen with step ticker
 
 Session ID is generated at /check/1 and stored in browser state throughout.
 OCR runs in browser on upload screen before submitting.
+
+#### Optional questions — answer codes
+
+Q9 (optional) — How was this internship structured?
+- one_on_one: One-on-one with a company or team
+- cohort: Part of a group or cohort of students
+- course_style: Like a course or training program with modules and sessions
+- not_sure: Not sure yet
 
 ### 3. Result page (/result/[id])
 - Score (0–100), verdict label, red/green flag pills
@@ -128,6 +137,8 @@ Start at 100, apply deductions/additions.
 | Commission based | -5 | -8 |
 | No offer letter | -5 | -10 |
 | They implied college contact | -3 | -8 |
+| Course-style structure (q9_structure = course_style) | -10 | -20 |
+| Cohort structure (q9_structure = cohort) | -5 | -15 |
 
 ### Tier 3 — Positive signals (always add)
 | Answer | Points |

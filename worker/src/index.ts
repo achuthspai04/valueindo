@@ -117,6 +117,13 @@ const offerLetterMap: Record<string, string> = {
   later: "They said an offer letter would come later",
 };
 
+const structureMap: Record<string, string> = {
+  one_on_one: "One-on-one with a company or team",
+  cohort: "Part of a group or cohort of students",
+  course_style: "Structured like a course or training program with modules",
+  not_sure: "Not sure yet",
+};
+
 // ─── App ──────────────────────────────────────────────────────────────────────
 
 const app = new Hono<{ Bindings: Bindings }>();
@@ -162,6 +169,7 @@ app.post("/analyse", async (c) => {
     q6_interview: string;
     q7_college?: string;
     q8_offer_letter?: string;
+    q9_structure?: string;
   };
 
   const body = await c.req.json<{
@@ -244,6 +252,12 @@ app.post("/analyse", async (c) => {
   }
   if (answers.q7_college === "yes") {
     apply(hasTier1Flag ? -10 : 0, "Claimed college gave contact");
+  }
+  if (answers.q9_structure === "course_style") {
+    apply(hasTier1Flag ? -20 : -10, hasTier1Flag ? "Paid course disguised as internship" : "Structured like a paid course, not real work");
+  }
+  if (answers.q9_structure === "cohort") {
+    apply(hasTier1Flag ? -15 : -5, hasTier1Flag ? "Group cohort + payment flag — classic scam pattern" : "Group cohort structure — unusual for real internships");
   }
 
   // Tier 3 — positive signals
@@ -375,6 +389,7 @@ What the student told us:
 - Interview or selection process: ${interviewMap[answers.q6_interview] ?? answers.q6_interview}
 - College gave contact: ${answers.q7_college ? (collegeMap[answers.q7_college] ?? answers.q7_college) : "Not answered"}
 - Offer letter provided: ${answers.q8_offer_letter ? (offerLetterMap[answers.q8_offer_letter] ?? answers.q8_offer_letter) : "Not answered"}
+- Internship structure: ${structureMap[answers.q9_structure ?? ""] ?? "Not answered"}
 
 Red flags identified: ${redFlags.join(", ") || "None"}
 Green flags identified: ${greenFlags.join(", ") || "None"}
@@ -418,6 +433,7 @@ Return ONLY this JSON:
       q6_interview         = ?,
       q7_college           = ?,
       q8_offer_letter      = ?,
+      q9_structure         = ?,
       extracted_text       = ?,
       base_score           = ?,
       final_score          = ?,
@@ -441,6 +457,7 @@ Return ONLY this JSON:
       answers.q6_interview,
       answers.q7_college ?? null,
       answers.q8_offer_letter ?? null,
+      answers.q9_structure ?? null,
       extractedText ?? null,
       baseScore,
       score,

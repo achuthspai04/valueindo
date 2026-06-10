@@ -66,10 +66,10 @@ export default function OptionalQ7Page() {
             <div className="w-24 sm:w-32 h-[3px] bg-[#f3f4f6] rounded-full overflow-hidden">
               <div
                 className="h-full bg-[#E8380D] rounded-full transition-[width] duration-500 ease-out"
-                style={{ width: "50%" }}
+                style={{ width: "33%" }}
               />
             </div>
-            <span className="text-[12px] text-[#9ca3af] tabular-nums">optional 1 of 2</span>
+            <span className="text-[12px] text-[#9ca3af] tabular-nums">optional 1 of 3</span>
           </div>
         </div>
 

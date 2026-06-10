@@ -20,6 +20,7 @@ CREATE TABLE IF NOT EXISTS sessions (
   q6_interview            TEXT,
   q7_college              TEXT,
   q8_offer_letter         TEXT,
+  q9_structure            TEXT,
 
   -- uploaded document
   extracted_text          TEXT,

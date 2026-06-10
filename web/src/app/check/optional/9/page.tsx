@@ -3,41 +3,42 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, FileText, FileMinus, Clock } from "lucide-react";
+import { ArrowLeft, User, Users, BookOpen, HelpCircle } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
-const STORAGE_KEY = "valueindo-answers";
+const STORAGE_KEY = "valueindo_answers";
 
 function loadAnswers(): Record<string, string> {
   if (typeof window === "undefined") return {};
-  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}"); }
+  try { return JSON.parse(sessionStorage.getItem(STORAGE_KEY) || "{}"); }
   catch { return {}; }
 }
 
 function saveAnswer(key: string, value: string) {
   const current = loadAnswers();
-  localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...current, [key]: value }));
+  sessionStorage.setItem(STORAGE_KEY, JSON.stringify({ ...current, [key]: value }));
 }
 
-const options: { text: string; icon: LucideIcon }[] = [
-  { text: "Yes", icon: FileText },
-  { text: "No", icon: FileMinus },
-  { text: "They said it would come later", icon: Clock },
+const options: { code: string; text: string; icon: LucideIcon }[] = [
+  { code: "one_on_one", text: "One-on-one with a company or team", icon: User },
+  { code: "cohort", text: "Part of a group or cohort of students", icon: Users },
+  { code: "course_style", text: "Like a course or training program with modules and sessions", icon: BookOpen },
+  { code: "not_sure", text: "Not sure yet", icon: HelpCircle },
 ];
 
-export default function OptionalQ8Page() {
+export default function OptionalQ9Page() {
   const router = useRouter();
   const [selected, setSelected] = useState<string | null>(null);
   const [savedValue, setSavedValue] = useState<string>("");
 
   useEffect(() => {
-    setSavedValue(loadAnswers().offer_letter ?? "");
+    setSavedValue(loadAnswers().q9_structure ?? "");
   }, []);
 
-  function handleSelect(text: string) {
-    setSelected(text);
-    saveAnswer("offer_letter", text);
-    setTimeout(() => router.push("/check/optional/9"), 280);
+  function handleSelect(code: string) {
+    setSelected(code);
+    saveAnswer("q9_structure", code);
+    setTimeout(() => router.push("/check/analysing"), 280);
   }
 
   return (
@@ -66,32 +67,32 @@ export default function OptionalQ8Page() {
             <div className="w-24 sm:w-32 h-[3px] bg-[#f3f4f6] rounded-full overflow-hidden">
               <div
                 className="h-full bg-[#E8380D] rounded-full transition-[width] duration-500 ease-out"
-                style={{ width: "67%" }}
+                style={{ width: "100%" }}
               />
             </div>
-            <span className="text-[12px] text-[#9ca3af] tabular-nums">optional 2 of 3</span>
+            <span className="text-[12px] text-[#9ca3af] tabular-nums">optional 3 of 3</span>
           </div>
         </div>
 
         <p className="text-[11px] font-semibold text-[#E8380D] tracking-[0.1em] uppercase mb-3.5">
-          Paperwork
+          Structure
         </p>
 
         <p
           className="text-[22px] sm:text-[26px] text-[#0f0f0f] leading-[1.3] mb-7"
           style={{ fontFamily: "var(--font-instrument)" }}
         >
-          Did they provide a formal offer letter or written agreement?
+          How was this internship structured?
         </p>
 
         <div className="flex flex-col gap-[10px]">
-          {options.map(({ text, icon: Icon }) => {
-            const isSelected = selected === text || (!selected && savedValue === text);
+          {options.map(({ code, text, icon: Icon }) => {
+            const isSelected = selected === code || (!selected && savedValue === code);
             return (
               <button
-                key={text}
+                key={code}
                 type="button"
-                onClick={() => handleSelect(text)}
+                onClick={() => handleSelect(code)}
                 className={`flex items-center gap-3.5 w-full text-left px-[18px] py-[14px] rounded-[10px] border-[1.5px] transition-all duration-150 cursor-pointer
                   ${isSelected
                     ? "border-[#E8380D] bg-[#fff5f3]"
@@ -115,7 +116,7 @@ export default function OptionalQ8Page() {
         <div className="mt-6">
           <button
             type="button"
-            onClick={() => router.push(`/result/${crypto.randomUUID()}`)}
+            onClick={() => router.push("/check/analysing")}
             className="text-[12px] text-[#9ca3af] hover:text-[#6b7280] underline underline-offset-[3px] bg-transparent border-0 cursor-pointer transition-colors"
           >
             skip — analyse anyway
