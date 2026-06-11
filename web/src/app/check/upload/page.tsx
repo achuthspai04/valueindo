@@ -14,6 +14,32 @@ function fileIcon(file: File) {
   return file.type.startsWith("image/") ? Image : FileText;
 }
 
+async function extractPdfText(file: File): Promise<string> {
+  const pdfjsLib = await import("pdfjs-dist");
+  pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
+    "pdfjs-dist/build/pdf.worker.min.mjs",
+    import.meta.url
+  ).toString();
+
+  const arrayBuffer = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+  let text = "";
+  for (let i = 1; i <= pdf.numPages; i++) {
+    const page = await pdf.getPage(i);
+    const content = await page.getTextContent();
+    text += content.items.map((item) => ("str" in item ? (item as { str: string }).str : "")).join(" ");
+  }
+  return text;
+}
+
+async function extractImageText(file: File): Promise<string> {
+  const { createWorker } = await import("tesseract.js");
+  const worker = await createWorker("eng");
+  const { data } = await worker.recognize(file);
+  await worker.terminate();
+  return data.text;
+}
+
 export default function UploadPage() {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -21,21 +47,21 @@ export default function UploadPage() {
   const [dragging, setDragging] = useState(false);
   const [ocrStatus, setOcrStatus] = useState<OcrStatus>("idle");
 
-  async function runOcr(newFiles: File[]) {
+  async function extractText(newFiles: File[]) {
     setOcrStatus("reading");
     try {
-      const { createWorker } = await import("tesseract.js");
-      const worker = await createWorker("eng");
       let combined = sessionStorage.getItem(EXTRACTED_TEXT_KEY) || "";
       for (const file of newFiles) {
-        const { data } = await worker.recognize(file);
-        combined += (combined ? "\n\n" : "") + data.text;
+        const text = file.type === "application/pdf"
+          ? await extractPdfText(file)
+          : await extractImageText(file);
+        combined += (combined ? "\n\n" : "") + text;
       }
-      await worker.terminate();
       sessionStorage.setItem(EXTRACTED_TEXT_KEY, combined.trim());
       setOcrStatus("done");
     } catch (err) {
-      console.error("OCR failed:", err);
+      console.error("Text extraction failed:", err);
+      sessionStorage.setItem(EXTRACTED_TEXT_KEY, "");
       setOcrStatus("error");
     }
   }
@@ -47,7 +73,7 @@ export default function UploadPage() {
     setFiles((prev) => {
       const existingNames = new Set(prev.map((f) => f.name));
       const added = next.filter((f) => !existingNames.has(f.name));
-      if (added.length) runOcr(added);
+      if (added.length) extractText(added);
       return [...prev, ...added];
     });
   }

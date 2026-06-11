@@ -64,10 +64,9 @@ export default function AnalysingPage() {
     let cancelled = false;
     const timers: ReturnType<typeof setTimeout>[] = [];
 
-    const sessionId = sessionStorage.getItem(SESSION_KEY);
     const answersRaw = sessionStorage.getItem(ANSWERS_KEY);
 
-    if (!sessionId || !answersRaw) {
+    if (!answersRaw) {
       router.replace("/check/1");
       return;
     }
@@ -82,23 +81,30 @@ export default function AnalysingPage() {
       timers.push(setTimeout(() => setActiveStep(i), i * 1000));
     });
 
-    fetch(`${process.env.NEXT_PUBLIC_WORKER_URL}/analyse`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ sessionId, answers, extractedText }),
-    })
-      .then((res) => {
-        if (!res.ok) throw new Error(`Request failed: ${res.status}`);
-        return res.json();
-      })
-      .then(() => {
-        if (cancelled) return;
-        setActiveStep(STEPS.length - 1);
-        router.replace(`/result/${sessionId}`);
-      })
-      .catch(() => {
-        if (!cancelled) setError(true);
+    (async () => {
+      let sessionId = sessionStorage.getItem(SESSION_KEY);
+      if (!sessionId) {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_WORKER_URL}/session/create`, { method: "POST" });
+        const data: { id?: string } = await res.json();
+        if (!data.id) throw new Error("Failed to create session");
+        sessionId = data.id;
+        sessionStorage.setItem(SESSION_KEY, sessionId);
+      }
+
+      const res = await fetch(`${process.env.NEXT_PUBLIC_WORKER_URL}/analyse`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sessionId, answers, extractedText }),
       });
+      if (!res.ok) throw new Error(`Request failed: ${res.status}`);
+      await res.json();
+
+      if (cancelled) return;
+      setActiveStep(STEPS.length - 1);
+      router.replace(`/result/${sessionId}`);
+    })().catch(() => {
+      if (!cancelled) setError(true);
+    });
 
     return () => {
       cancelled = true;

@@ -138,6 +138,9 @@ export default function CheckStepPage() {
   // Create (or reuse) the session as soon as the user lands on the first step
   useEffect(() => {
     if (stepNum !== 1) return;
+
+    console.log("WORKER URL:", process.env.NEXT_PUBLIC_WORKER_URL);
+
     if (sessionStorage.getItem(SESSION_KEY)) return;
 
     fetch(`${process.env.NEXT_PUBLIC_WORKER_URL}/session/create`, { method: "POST" })
