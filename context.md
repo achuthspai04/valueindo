@@ -36,7 +36,7 @@ valueindo/
 ## Backend stack (worker/)
 
 - Cloudflare Workers (Hono.js)
-- Cloudflare D1 (SQLite database)
+- Cloudflare D1 (SQLite database) — binding name is `DB` (see `worker/wrangler.toml`). All code references `c.env.DB`; keep the wrangler.toml binding and the code in sync — a mismatch here fails every endpoint with "Cannot read properties of undefined (reading 'prepare')".
 - Groq API — llama-3.3-70b-versatile (free tier, 6k req/day)
 - NO Claude API, NO OpenAI
 

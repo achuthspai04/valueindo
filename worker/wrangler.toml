@@ -6,4 +6,4 @@ compatibility_flags = ["nodejs_compat"]
 [[d1_databases]]
 binding = "DB"
 database_name = "valueindo-db"
-database_id = "YOUR_D1_DATABASE_ID"
+database_id = "8812a80a-3571-4eed-baf2-babe35f9a6b1"
